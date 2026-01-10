@@ -10,16 +10,71 @@ Cloudflare D1（SQLite）を使用したデータベース設計。
 
 ## テーブル構成
 
-```
-users
-  ↓ (1:N)
-sessions
-  ↓ (1:N)
-plans
-  ↓ (1:N)
-days
-  ↓ (1:N)
-activities
+```mermaid
+erDiagram
+    users ||--o{ sessions : "1:N"
+    users ||--o{ plans : "1:N"
+    sessions ||--o{ plans : "1:N"
+    plans ||--o{ days : "1:N"
+    days ||--o{ activities : "1:N"
+
+    users {
+        TEXT id PK "uuidv7"
+        INTEGER created_at "Unix timestamp"
+        INTEGER last_accessed_at "最終アクセス"
+    }
+
+    sessions {
+        TEXT id PK "uuidv7"
+        TEXT user_id FK "ユーザーID"
+        TEXT status "planning/completed/failed"
+        INTEGER current_step "現在のステップ(1-13)"
+        TEXT memory_snapshot "JSON: AgentMemory"
+        INTEGER created_at
+        INTEGER updated_at
+    }
+
+    plans {
+        TEXT id PK "uuidv7"
+        TEXT user_id FK
+        TEXT session_id FK "元のセッション"
+        TEXT title "プランタイトル"
+        TEXT destination "目的地"
+        TEXT origin "出発地"
+        TEXT start_date "開始日"
+        TEXT end_date "終了日"
+        TEXT status "draft/completed"
+        INTEGER created_at
+        INTEGER updated_at
+    }
+
+    days {
+        TEXT id PK "uuidv7"
+        TEXT plan_id FK
+        INTEGER day_number "日数(1,2,3...)"
+        TEXT date "日付(YYYY-MM-DD)"
+        TEXT area "エリア"
+        TEXT theme "テーマ"
+    }
+
+    activities {
+        TEXT id PK "uuidv7"
+        TEXT day_id FK
+        INTEGER order_index "順序"
+        TEXT start_time "開始時刻(HH:MM)"
+        TEXT end_time "終了時刻(HH:MM)"
+        INTEGER duration_minutes "滞在時間(分)"
+        TEXT activity_type "種類"
+        TEXT name "名前"
+        TEXT description "簡単な説明"
+        TEXT detailed_description "詳細説明"
+        REAL latitude "緯度"
+        REAL longitude "経度"
+        TEXT address "住所"
+        TEXT metadata "JSON: 追加情報"
+        TEXT image_url "画像URL"
+        TEXT image_prompt "画像生成プロンプト"
+    }
 ```
 
 ## スキーマ定義

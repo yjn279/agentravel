@@ -4,36 +4,37 @@
 
 マルチエージェントシステム：メインエージェント（オーケストレーター）が5つのサブエージェントを調整。
 
-```
-┌─────────────────────────────────────────────────┐
-│       メインエージェント（オーケストレーター）      │
-│                                                 │
-│  役割: ユーザー対話、フロー制御、手戻り判断       │
-│  担当: 手順1-4, 7, 13                           │
-│  パターン: ReAct + 対話型                        │
-└─────────────────────────────────────────────────┘
-          │
-          │ サブエージェント呼び出し
-          │
-    ┌─────┼──────┬──────┬──────┐
-    ▼     ▼      ▼      ▼      ▼
-┌────────┐┌────────┐┌────────┐┌────────┐┌────────┐
-│フライト││宿泊    ││観光    ││グルメ  ││ルート  │
-│検索    ││検索    ││スポット││検索    ││最適化  │
-│        ││        ││検索    ││        ││        │
-│手順5-6 ││手順8   ││手順9   ││手順10  ││手順11-12│
-└────────┘└────────┘└────────┘└────────┘└────────┘
-    │        │        │        │        │
-    └────────┴────────┴────────┴────────┘
-                    │
-                    ▼ 各エージェントから呼び出される
-              ┌──────────────┐
-              │  ツール群      │
-              │  - Web検索     │
-              │  - Distance API│
-              │  - DB操作      │
-              │  - 画像生成    │
-              └──────────────┘
+```mermaid
+graph TD
+    Main["メインエージェント<br/>(オーケストレーター)<br/><br/>役割: ユーザー対話、フロー制御、手戻り判断<br/>担当: 手順1-4, 7, 13<br/>パターン: ReAct + 対話型"]
+
+    Flight["フライト検索<br/>エージェント<br/>(手順5-6)"]
+    Accommodation["宿泊検索<br/>エージェント<br/>(手順8)"]
+    Spot["観光スポット検索<br/>エージェント<br/>(手順9)"]
+    Gourmet["グルメ検索<br/>エージェント<br/>(手順10)"]
+    Routing["ルート最適化<br/>エージェント<br/>(手順11-12)"]
+
+    Tools["ツール群<br/>- Web検索<br/>- Distance API<br/>- DB操作<br/>- 画像生成"]
+
+    Main -->|サブエージェント呼び出し| Flight
+    Main -->|サブエージェント呼び出し| Accommodation
+    Main -->|サブエージェント呼び出し| Spot
+    Main -->|サブエージェント呼び出し| Gourmet
+    Main -->|サブエージェント呼び出し| Routing
+
+    Flight -->|ツール使用| Tools
+    Accommodation -->|ツール使用| Tools
+    Spot -->|ツール使用| Tools
+    Gourmet -->|ツール使用| Tools
+    Routing -->|ツール使用| Tools
+
+    style Main fill:#e1f5ff
+    style Flight fill:#fff4e1
+    style Accommodation fill:#fff4e1
+    style Spot fill:#fff4e1
+    style Gourmet fill:#fff4e1
+    style Routing fill:#fff4e1
+    style Tools fill:#f0f0f0
 ```
 
 ## 設計パターン
@@ -88,7 +89,40 @@
 ### 動作方式
 
 **ReActループ**:
+
+```mermaid
+flowchart TD
+    Start([開始]) --> CheckComplete{タスク完了？}
+    CheckComplete -->|No| Thought["1. Thought<br/>次のアクションを決定<br/>llm.think(memory, tools)"]
+    CheckComplete -->|Yes| End([終了])
+
+    Thought --> Action["2. Action<br/>ツール/サブエージェント呼び出し<br/>executeActions(actions)"]
+
+    Action --> Parallel{並列実行可能？}
+    Parallel -->|Yes| ParallelExec["複数アクションを並列実行"]
+    Parallel -->|No| SequentialExec["順次実行"]
+
+    ParallelExec --> Observation
+    SequentialExec --> Observation
+
+    Observation["3. Observation<br/>結果をメモリに記録<br/>memory.addObservation(results)"]
+
+    Observation --> ErrorCheck{エラー発生？}
+    ErrorCheck -->|Yes| ErrorHandle["エラーハンドリング<br/>handleErrors()"]
+    ErrorCheck -->|No| CheckComplete
+
+    ErrorHandle --> CheckComplete
+
+    style Start fill:#90EE90
+    style End fill:#FFB6C1
+    style Thought fill:#87CEEB
+    style Action fill:#DDA0DD
+    style Observation fill:#F0E68C
+    style ErrorHandle fill:#FFA07A
 ```
+
+疑似コード:
+```javascript
 while (!isTaskComplete(memory)) {
   // 1. Thought: 次のアクションを決定
   thought = llm.think(memory, tools);

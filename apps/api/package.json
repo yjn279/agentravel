@@ -1,0 +1,32 @@
+{
+  "name": "@agentravel/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply agentravel-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply agentravel-db --remote",
+    "db:studio": "drizzle-kit studio",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^1.0.0",
+    "@google/generative-ai": "^0.21.0",
+    "@mastra/core": "^0.1.0",
+    "drizzle-orm": "^0.37.0",
+    "hono": "^4.0.0",
+    "openai": "^6.16.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.28.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.90.0"
+  }
+}

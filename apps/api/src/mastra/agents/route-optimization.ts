@@ -191,12 +191,7 @@ ${locationsText}
         start_time: formatTime(activityStartTime),
         end_time: formatTime(currentTime),
         duration_minutes: item.duration_minutes,
-        activity_type:
-          item.type === 'attraction'
-            ? 'sightseeing'
-            : item.type === 'lunch' || item.type === 'dinner'
-            ? 'meal'
-            : 'transport',
+        activity_type: getActivityType(item.type),
         name: item.name,
         latitude: item.location.lat,
         longitude: item.location.lng,
@@ -268,6 +263,21 @@ ${locationsText}
   } catch (error: any) {
     console.error('Route optimization error:', error);
     throw new Error(`Failed to optimize route: ${error.message || error}`);
+  }
+}
+
+/**
+ * Map location item type to activity type
+ */
+function getActivityType(type: 'attraction' | 'lunch' | 'dinner'): Activity['activity_type'] {
+  switch (type) {
+    case 'attraction':
+      return 'sightseeing';
+    case 'lunch':
+    case 'dinner':
+      return 'meal';
+    default:
+      return 'transport';
   }
 }
 

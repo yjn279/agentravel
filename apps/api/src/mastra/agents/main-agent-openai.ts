@@ -6,17 +6,9 @@
  */
 
 import OpenAI from 'openai';
-import { MemoryManager, createMemory } from '../memory/manager';
+import { MemoryManager } from '../memory/manager';
 import { SessionPersistence } from '../memory/persistence';
 import type { AgentMemory } from '@agentravel/shared/types';
-import { generateJSON, generateText } from '../tools/openai-text';
-
-// Import sub-agents
-import { searchFlights, suggestAlternativeDates } from './flight-search';
-import { searchAccommodation, recommendHotelLocation } from './accommodation-search';
-import { searchAttractions } from './attraction-search';
-import { searchRestaurants } from './restaurant-search';
-import { optimizeRoute } from './route-optimization';
 
 const SYSTEM_PROMPT = `あなたは旅行計画アシスタントです。ユーザーの旅行の夢を、詳細で実現可能な旅程に変換します。
 
@@ -111,21 +103,10 @@ export class MainAgent {
    * Initialize or resume a session
    */
   async initialize(userId: string, sessionId?: string): Promise<AgentMemory> {
-    let memory: AgentMemory;
+    const loaded = sessionId ? await this.persistence.loadSession(sessionId) : null;
+    const memory = loaded || await this.persistence.createSession(userId);
 
-    if (sessionId) {
-      const loaded = await this.persistence.loadSession(sessionId);
-      if (loaded) {
-        memory = loaded;
-        console.log(`📂 Resumed session: ${sessionId}`);
-      } else {
-        memory = await this.persistence.createSession(userId);
-        console.log(`✨ Created new session: ${memory.session_id}`);
-      }
-    } else {
-      memory = await this.persistence.createSession(userId);
-      console.log(`✨ Created new session: ${memory.session_id}`);
-    }
+    console.log(loaded ? `Resumed session: ${sessionId}` : `Created new session: ${memory.session_id}`);
 
     this.memoryManager = new MemoryManager(memory);
     return memory;

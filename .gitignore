@@ -48,3 +48,4 @@ drizzle/
 *.tsbuildinfo
 .turbo
 .vercel
+.claude/

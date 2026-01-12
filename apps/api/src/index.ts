@@ -6,7 +6,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { MainAgent } from './mastra/agents/main-agent-openai';
+import { createMastraInstance } from './mastra/mastra.config';
 
 type Bindings = {
   DB: D1Database;
@@ -28,6 +28,7 @@ app.post('/api/chat', async (c) => {
     return c.json({ error: 'Message is required' }, 400);
   }
 
+  // API key check
   const apiKey = c.env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return c.json({ error: 'OPENAI_API_KEY not configured' }, 500);
@@ -35,22 +36,58 @@ app.post('/api/chat', async (c) => {
 
   const db = c.env?.DB || createMockD1Database();
 
-  const agent = new MainAgent({
-    apiKey,
+  // Create Mastra instance (OpenAI-only, Cloudflare D1 storage)
+  const mastra = createMastraInstance({
+    openaiApiKey: apiKey,
     db,
-    userId: 'web-user-' + Date.now(),
   });
 
-  await agent.initialize('web-user-' + Date.now(), sessionId);
+  console.log('Mastra instance:', mastra);
+  console.log('Mastra agents:', mastra.agents);
+  console.log('Mastra methods:', typeof mastra.getAgent);
+  console.log('Available agent keys:', mastra.agents ? Object.keys(mastra.agents) : 'agents is undefined');
 
-  const result = await agent.chat(message);
+  // Try accessing agent through getAgent method if it exists
+  let agent;
+  if (typeof mastra.getAgent === 'function') {
+    console.log('Using getAgent method');
+    agent = mastra.getAgent('travelPlanning');
+  } else if (mastra.agents) {
+    console.log('Using agents property');
+    agent = mastra.agents.travelPlanning;
+  } else {
+    throw new Error('Cannot access agents from Mastra instance');
+  }
+
+  console.log('Agent:', agent);
+
+  // Thread ID management (Mastra memory system)
+  let threadId = sessionId;
+  if (!threadId) {
+    // Create new thread if no session exists
+    const thread = await mastra.memory?.createThread();
+    threadId = thread?.id || 'session-' + Date.now();
+  }
+
+  // Generate response using Mastra Agent with threadId and resourceId
+  // In Mastra v1, pass the message content directly
+  const result = await agent.generate(message, {
+    threadId, // Thread identifier for conversation continuity
+    resourceId: 'user-default', // Stable identifier for the user/entity
+  });
+
+  // Extract response text
+  const responseText = result.text || '';
+
+  // Check if planning is complete
+  const completed = responseText.includes('[COMPLETE]');
 
   return c.json({
-    response: result.response,
-    sessionId: result.memory.session_id,
-    currentStep: result.memory.current_step,
-    status: result.memory.status,
-    completed: result.completed,
+    response: responseText,
+    sessionId: threadId,
+    currentStep: 1, // TODO: Extract from Mastra memory
+    status: completed ? 'completed' : 'planning',
+    completed,
   });
 });
 

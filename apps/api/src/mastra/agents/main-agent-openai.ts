@@ -134,10 +134,15 @@ export class MainAgent {
           { role: 'system', content: this.buildSystemPrompt() },
           ...messages,
         ],
-        max_completion_tokens: 4096,
+        max_completion_tokens: 16384, // Increased for reasoning + response
       });
 
       const responseText = completion.choices[0].message.content || '';
+      console.log('🤖 Agent response length:', responseText.length);
+      if (responseText.length === 0) {
+        console.warn('⚠️  Empty response from OpenAI!');
+        console.log('Completion:', JSON.stringify(completion, null, 2));
+      }
 
       // Add assistant response to memory
       this.memoryManager.addMessage('assistant', responseText);

@@ -1,9 +1,25 @@
 /**
- * Mastra Tools
+ * Tool Aggregation (OpenAI-only)
  *
- * Tools used by agents to interact with external services and APIs.
+ * Exports all tools for easy import in Mastra config.
  */
 
-export * from './gemini-text';
-export * from './gemini-distance';
-export * from './web-search';
+import { createFlightSearchTool } from './flight-search-tool';
+import { createAccommodationSearchTool } from './accommodation-search-tool';
+import { createAttractionSearchTool } from './attraction-search-tool';
+import { createRestaurantSearchTool } from './restaurant-search-tool';
+import { createRouteOptimizationTool } from './route-optimization-tool';
+import { createDistanceCalculationTool } from './distance-calculation-tool';
+import { createWebSearchTool } from './web-search-tool';
+
+export function getAllTools(apiKey: string) {
+  return {
+    flightSearch: createFlightSearchTool(apiKey),
+    accommodationSearch: createAccommodationSearchTool(apiKey),
+    attractionSearch: createAttractionSearchTool(apiKey),
+    restaurantSearch: createRestaurantSearchTool(apiKey),
+    routeOptimization: createRouteOptimizationTool(apiKey),
+    distanceCalculation: createDistanceCalculationTool(apiKey),
+    webSearch: createWebSearchTool(apiKey),
+  };
+}

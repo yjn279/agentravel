@@ -69,11 +69,13 @@ app.post('/api/chat', async (c) => {
     threadId = thread?.id || 'session-' + Date.now();
   }
 
-  // Generate response using Mastra Agent with threadId and resourceId
-  // In Mastra v1, pass the message content directly
+  // Generate response using Mastra Agent with memory
+  // In Mastra v1, use memory.thread and memory.resource
   const result = await agent.generate(message, {
-    threadId, // Thread identifier for conversation continuity
-    resourceId: 'user-default', // Stable identifier for the user/entity
+    memory: {
+      thread: threadId, // Thread identifier for conversation continuity
+      resource: 'user-default', // Stable identifier for the user/entity
+    },
   });
 
   // Extract response text

@@ -28,6 +28,7 @@ export function createMastraInstance(config: {
   const travelPlanningAgent = createTravelPlanningAgent({
     openaiApiKey: config.openaiApiKey,
     openai, // Pass the OpenAI provider to create LanguageModel
+    storage, // Pass D1Store for Memory instance
   });
   console.log('Travel planning agent created:', travelPlanningAgent);
 

@@ -17,6 +17,7 @@
     "@mastra/cloudflare-d1": "1.0.0-beta.9",
     "@mastra/core": "1.0.0-beta.21",
     "@mastra/deployer-cloudflare": "1.0.0-beta.2",
+    "@mastra/memory": "1.0.0-beta.12",
     "ai": "^6.0.28",
     "drizzle-orm": "^0.37.0",
     "hono": "^4.0.0",

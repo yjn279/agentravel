@@ -5,17 +5,25 @@
  */
 
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
 import { getAllTools } from '../tools';
 
 export function createTravelPlanningAgent(config: {
   openaiApiKey: string;
   openai: any; // Mastra OpenAI provider
+  storage: any; // D1Store for memory persistence
 }) {
   const tools = getAllTools(config.openaiApiKey);
+
+  // Create Memory instance with D1Store
+  const memory = new Memory({
+    storage: config.storage,
+  });
 
   return new Agent({
     name: 'travel-planning-agent',
     description: 'ユーザーの旅行の夢を詳細な旅程に変換する旅行計画アシスタント',
+    memory, // Pass Memory instance to Agent
     instructions: `あなたは旅行計画アシスタントです。ユーザーと自然な対話を通じて、以下の13ステップで旅行計画を作成します：
 
 ## Phase 1: 基本情報の収集（ステップ1-4）
